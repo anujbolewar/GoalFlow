@@ -38,6 +38,20 @@ app.include_router(ai_router)
 def health_check():
     return {"status": "ok", "message": "GoalFlow API is running"}
 
+@app.post("/demo/reset")
+def demo_reset_endpoint():
+    from seed import reset_and_seed_db
+    from fastapi import HTTPException
+    try:
+        reset_and_seed_db()
+        return {"status": "success", "message": "Database successfully restored to seed data in under 1 second!"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database re-seeding engine failure: {e}"
+        )
+
+
 # WEBSOCKET REAL-TIME LEDGER MANAGEMENT
 class ConnectionManager:
     def __init__(self):
