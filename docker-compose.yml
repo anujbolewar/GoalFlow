@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database Service
+  db:
+    image: postgres:15-alpine
+    container_name: goalflow-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: goalflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. Redis Cache Service (Celery Broker / Session Cache)
+  redis:
+    image: redis:7-alpine
+    container_name: goalflow-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # 3. Adminer - Premium visual db client for instant hackathon DB validation
+  db-client:
+    image: adminer:latest
+    container_name: goalflow-db-client
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
