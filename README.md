@@ -75,6 +75,40 @@ Navigate to [http://localhost:3000/login](http://localhost:3000/login) to run wi
 
 ---
 
+## 🖥️ Portal Walkthrough & Interfaces
+
+### 🔐 1. Access & Sign-In Portal
+
+The central login gateway designed specifically for seamless stage presentations. Features options for Microsoft Azure AD SSO alongside direct one-click bypass buttons for all three pitch roles—eliminating manual password inputs during the live demo.
+
+![Access Portal](./snapshots/login_screen.png)
+
+---
+
+### 📈 2. Employee Performance Desk (Rahul Verma)
+
+The employee dashboard where team members create and track their quarterly OKRs. It features weightage budget tracking banners (enforcing exactly 100% allocation), dynamic UoM configuration controls, and the active **Claude 3.5 AI Coaching Panel** recommending SMART metrics with shimmers.
+
+![Employee Performance Dashboard](./snapshots/employee_dashboard.png)
+
+---
+
+### 🗂️ 3. Manager Goal Approval Desk (Neha Gupta)
+
+The review center where department heads audit goal alignment, edit metrics inline, and trigger the mechanical sheet lock. The panel locks with an elegant Framer Motion spring overlay, synthesizing hardware-like lock clicks.
+
+![Manager Goal Approval Sheet](./snapshots/manager_dashboard.png)
+
+---
+
+### 📊 4. Admin Completion Dashboard
+
+The enterprise metrics tower showing real-time organizational performance analytics. It highlights total submissions, manager approvals, and check-in success rates, accompanied by dynamic departmental completion bar charts and a live **WebSockets telemetric Activity Feed** updating in real time.
+
+![Admin Completion Dashboard](./snapshots/admin_dashboard.png)
+
+---
+
 ## 🏆 The 3 Pitch "Wow Moments" Playbook
 
 We have engineered three high-impact visual segments designed to wow hackathon judges in less than 20 seconds each:
