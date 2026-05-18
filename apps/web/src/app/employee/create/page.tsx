@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { fetchApi } from '@/lib/api';
 import {
   Card,
   CardContent,
@@ -30,6 +31,95 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 
+interface Suggestion {
+  title: string;
+  uom_type?: string;
+  uom?: string;
+  suggested_target?: string | number;
+  target?: string;
+  weightage_suggestion?: number;
+  weightage?: number;
+  description?: string;
+  desc?: string;
+  rationale?: string;
+}
+
+const suggestionsMap: Record<string, Suggestion[]> = {
+  'Revenue Growth': [
+    {
+      title: 'Achieve ₹50L in new client revenue by Q4',
+      uom: 'NUMERIC',
+      target: '5000000',
+      weightage: 25,
+      desc: 'Focus on acquiring mid-market enterprise accounts across Western India.',
+    },
+    {
+      title: 'Close 15 enterprise deals in FY2026',
+      uom: 'NUMERIC',
+      target: '15',
+      weightage: 20,
+      desc: 'Prioritize deals with average contract value exceeding ₹3L.',
+    },
+    {
+      title: 'Upsell premium SaaS add-ons to 10 existing clients',
+      uom: 'NUMERIC',
+      target: '10',
+      weightage: 10,
+      desc: 'Collaborate with Customer Success to identify qualified accounts.',
+    },
+  ],
+  'Cost Reduction': [
+    {
+      title: 'Reduce AWS production environment spend by 15%',
+      uom: 'PERCENTAGE',
+      target: '15',
+      weightage: 20,
+      desc: 'Optimize EC2/RDS instances and deprecate unused elastic IPs.',
+    },
+    {
+      title: 'Deprecate legacy test tooling to save ₹50k monthly',
+      uom: 'ZERO_BASED',
+      target: '0',
+      weightage: 15,
+      desc: 'Complete migration of all team test runner pipelines to CI/CD.',
+    },
+  ],
+  'Customer Experience': [
+    {
+      title: 'Maintain 90% client retention rate',
+      uom: 'PERCENTAGE',
+      target: '90',
+      weightage: 20,
+      desc: 'Establish proactive bi-weekly health checks for high-priority client list.',
+    },
+    {
+      title: 'Achieve CSAT score of 4.5 out of 5',
+      uom: 'NUMERIC',
+      target: '4.5',
+      weightage: 20,
+      desc: 'Accelerate resolution times for tier-1 customer escalation incidents.',
+    },
+  ],
+  'People Development': [
+    {
+      title: 'Complete Azure Architect certification',
+      uom: 'TIMELINE',
+      target: '100',
+      weightage: 15,
+      desc: 'Pass AZ-305 design exam and run 2 knowledge-transfer sessions.',
+    },
+  ],
+  Innovation: [
+    {
+      title: 'Build and deploy Claude AI assistant integration prototype',
+      uom: 'TIMELINE',
+      target: '100',
+      weightage: 25,
+      desc: 'Build secure proxy layer with prompt injection defense schemas.',
+    },
+  ],
+};
+
 export default function CreateGoalPage() {
   const router = useRouter();
 
@@ -45,100 +135,54 @@ export default function CreateGoalPage() {
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // AI suggestions loading states
+  const [suggestedGoals, setSuggestedGoals] = useState<Suggestion[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+
   const remainingWeightage = 55; // 100% - 45% (pre-seeded 2 goals)
 
-  // AI Suggestions database mapping
-  const suggestionsMap: Record<
-    string,
-    Array<{
-      title: string;
-      uom: string;
-      target: string;
-      weightage: number;
-      desc: string;
-    }>
-  > = {
-    'Revenue Growth': [
-      {
-        title: 'Achieve ₹50L in new client revenue by Q4',
-        uom: 'NUMERIC',
-        target: '5000000',
-        weightage: 25,
-        desc: 'Focus on acquiring mid-market enterprise accounts across Western India.',
-      },
-      {
-        title: 'Close 15 enterprise deals in FY2026',
-        uom: 'NUMERIC',
-        target: '15',
-        weightage: 20,
-        desc: 'Prioritize deals with average contract value exceeding ₹3L.',
-      },
-      {
-        title: 'Upsell premium SaaS add-ons to 10 existing clients',
-        uom: 'NUMERIC',
-        target: '10',
-        weightage: 10,
-        desc: 'Collaborate with Customer Success to identify qualified accounts.',
-      },
-    ],
-    'Cost Reduction': [
-      {
-        title: 'Reduce AWS production environment spend by 15%',
-        uom: 'PERCENTAGE',
-        target: '15',
-        weightage: 20,
-        desc: 'Optimize EC2/RDS instances and deprecate unused elastic IPs.',
-      },
-      {
-        title: 'Deprecate legacy test tooling to save ₹50k monthly',
-        uom: 'ZERO_BASED',
-        target: '0',
-        weightage: 15,
-        desc: 'Complete migration of all team test runner pipelines to CI/CD.',
-      },
-    ],
-    'Customer Experience': [
-      {
-        title: 'Maintain 90% client retention rate',
-        uom: 'PERCENTAGE',
-        target: '90',
-        weightage: 20,
-        desc: 'Establish proactive bi-weekly health checks for high-priority client list.',
-      },
-      {
-        title: 'Achieve CSAT score of 4.5 out of 5',
-        uom: 'NUMERIC',
-        target: '4.5',
-        weightage: 20,
-        desc: 'Accelerate resolution times for tier-1 customer escalation incidents.',
-      },
-    ],
-    'People Development': [
-      {
-        title: 'Complete Azure Architect certification',
-        uom: 'TIMELINE',
-        target: '100',
-        weightage: 15,
-        desc: 'Pass AZ-305 design exam and run 2 knowledge-transfer sessions.',
-      },
-    ],
-    Innovation: [
-      {
-        title: 'Build and deploy Claude AI assistant integration prototype',
-        uom: 'TIMELINE',
-        target: '100',
-        weightage: 25,
-        desc: 'Build secure proxy layer with prompt injection defense schemas.',
-      },
-    ],
-  };
+  // Fetch live AI suggestions from Claude 3.5 on selection changes
+  useEffect(() => {
+    if (!thrustArea) {
+      setSuggestedGoals([]);
+      return;
+    }
 
-  const handleApplySuggestion = (sug: (typeof suggestionsMap)[string][0]) => {
+    const loadSuggestions = async () => {
+      setIsLoadingSuggestions(true);
+      try {
+        const res = await fetchApi('/ai/suggest-goals', {
+          method: 'POST',
+          body: JSON.stringify({ thrust_area: thrustArea }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestedGoals(data);
+        } else {
+          setSuggestedGoals(suggestionsMap[thrustArea] || []);
+        }
+      } catch {
+        console.warn('Using high-fidelity static suggestions fallback.');
+        setSuggestedGoals(suggestionsMap[thrustArea] || []);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    };
+
+    loadSuggestions();
+  }, [thrustArea]);
+
+  const handleApplySuggestion = (sug: Suggestion) => {
     setTitle(sug.title);
-    setUomType(sug.uom);
-    setTarget(sug.target);
-    setWeightage(sug.weightage.toString());
-    setDescription(sug.desc);
+    setUomType(sug.uom_type?.toUpperCase() || sug.uom || 'PERCENTAGE');
+    setTarget(sug.suggested_target?.toString() || sug.target || '100');
+    setWeightage(
+      sug.weightage_suggestion?.toString() || sug.weightage?.toString() || '20'
+    );
+    setDescription(
+      (sug.description || sug.desc || '') +
+        (sug.rationale ? `\n\n[Rationale: ${sug.rationale}]` : '')
+    );
   };
 
   // Live validator
@@ -410,7 +454,38 @@ export default function CreateGoalPage() {
             </CardHeader>
             <CardContent className="pt-4">
               <AnimatePresence mode="wait">
-                {thrustArea ? (
+                {isLoadingSuggestions ? (
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="space-y-3"
+                  >
+                    <span className="text-xs text-purple-400 font-bold uppercase tracking-wider block">
+                      🔮 Claude is engineering alignment...
+                    </span>
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="p-4 bg-[#0F172A]/40 border border-[#334155]/60 rounded-xl space-y-2.5 relative overflow-hidden"
+                      >
+                        <motion.div
+                          animate={{ x: ['-100%', '100%'] }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 1.5,
+                            ease: 'linear',
+                          }}
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-500/10 to-transparent w-full h-full"
+                        />
+                        <div className="h-4 bg-slate-800 rounded-md w-3/4 animate-pulse" />
+                        <div className="h-3 bg-slate-800 rounded-md w-5/6 animate-pulse" />
+                        <div className="h-2 bg-slate-800 rounded-md w-1/2 animate-pulse" />
+                      </div>
+                    ))}
+                  </motion.div>
+                ) : thrustArea ? (
                   <motion.div
                     key={thrustArea}
                     initial={{ opacity: 0, x: 10 }}
@@ -420,46 +495,68 @@ export default function CreateGoalPage() {
                     className="space-y-4"
                   >
                     <span className="text-xs text-purple-400 font-bold uppercase tracking-wider block">
-                      ✨ Suggestions for {thrustArea}:
+                      ✨ AI Coach Suggestions for {thrustArea}:
                     </span>
 
                     <div className="space-y-3">
-                      {suggestionsMap[thrustArea]?.map((sug, i) => (
-                        <div
-                          key={i}
-                          className="bg-[#0F172A]/60 border border-[#334155]/80 hover:border-purple-500/40 rounded-xl p-4 flex flex-col gap-2 transition-all group"
-                        >
-                          <div className="flex justify-between items-start gap-2">
-                            <span className="text-xs font-bold text-slate-100 group-hover:text-white leading-relaxed">
-                              {sug.title}
-                            </span>
-                          </div>
+                      {suggestedGoals.map((sug, i) => {
+                        const sugUom =
+                          sug.uom_type?.toUpperCase() ||
+                          sug.uom ||
+                          'PERCENTAGE';
+                        const sugTarget =
+                          sug.suggested_target?.toString() ||
+                          sug.target ||
+                          '100';
+                        const sugWeight =
+                          sug.weightage_suggestion?.toString() ||
+                          sug.weightage?.toString() ||
+                          '20';
+                        const sugDesc = sug.description || sug.desc;
 
-                          <p className="text-[10px] text-[#94A3B8]">
-                            {sug.desc}
-                          </p>
-
-                          <div className="flex flex-wrap gap-1.5 items-center mt-1">
-                            <Badge className="bg-slate-700/60 text-slate-300 border-none text-[8px] font-bold px-1.5 py-0">
-                              UoM: {sug.uom}
-                            </Badge>
-                            <Badge className="bg-slate-700/60 text-slate-300 border-none text-[8px] font-bold px-1.5 py-0">
-                              Target: {sug.target}
-                            </Badge>
-                            <Badge className="bg-purple-900/30 text-purple-400 border-none text-[8px] font-black px-1.5 py-0">
-                              Weight: {sug.weightage}%
-                            </Badge>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleApplySuggestion(sug)}
-                            className="text-[10px] text-purple-400 hover:text-purple-300 font-bold text-left mt-2 flex items-center gap-1"
+                        return (
+                          <div
+                            key={i}
+                            className="bg-[#0F172A]/60 border border-[#334155]/80 hover:border-purple-500/40 rounded-xl p-4 flex flex-col gap-2 transition-all group"
                           >
-                            Use this suggestion →
-                          </button>
-                        </div>
-                      ))}
+                            <div className="flex justify-between items-start gap-2">
+                              <span className="text-xs font-bold text-slate-100 group-hover:text-white leading-relaxed">
+                                {sug.title}
+                              </span>
+                            </div>
+
+                            <p className="text-[10px] text-[#94A3B8]">
+                              {sugDesc}
+                            </p>
+
+                            {sug.rationale && (
+                              <p className="text-[9px] text-[#8B5CF6] italic bg-[#8B5CF6]/5 px-2 py-1 rounded border border-[#8B5CF6]/15">
+                                <strong>Rationale:</strong> {sug.rationale}
+                              </p>
+                            )}
+
+                            <div className="flex flex-wrap gap-1.5 items-center mt-1">
+                              <Badge className="bg-slate-700/60 text-slate-300 border-none text-[8px] font-bold px-1.5 py-0">
+                                UoM: {sugUom}
+                              </Badge>
+                              <Badge className="bg-slate-700/60 text-slate-300 border-none text-[8px] font-bold px-1.5 py-0">
+                                Target: {sugTarget}
+                              </Badge>
+                              <Badge className="bg-purple-900/30 text-purple-400 border-none text-[8px] font-black px-1.5 py-0">
+                                Weight: {sugWeight}%
+                              </Badge>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleApplySuggestion(sug)}
+                              className="text-[10px] text-purple-400 hover:text-purple-300 font-bold text-left mt-2 flex items-center gap-1"
+                            >
+                              Use this suggestion →
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </motion.div>
                 ) : (

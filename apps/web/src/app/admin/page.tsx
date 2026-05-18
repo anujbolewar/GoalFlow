@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Toaster, toast } from 'sonner';
+import { fetchApi } from '@/lib/api';
 import {
   Card,
   CardContent,
@@ -35,12 +37,123 @@ import {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const [isResetting, setIsResetting] = useState(false);
+  const [pulse, setPulse] = useState(false);
 
   // Real-time counter states
   const totalEmployees = 10;
   const goalsSubmitted = 8;
   const [managerApproved, setManagerApproved] = useState(6);
   const checkInsComplete = 4;
+
+  // Real-time WebSocket connection to the backend
+  useEffect(() => {
+    const isOfflineMode =
+      typeof window !== 'undefined' &&
+      (window.location.search.includes('demo=true') ||
+        window.location.search.includes('offline=true'));
+
+    if (isOfflineMode) {
+      console.log(
+        '🛟 [Offline Mode WS] WebSocket hooks ignored in fallback mode.'
+      );
+      return;
+    }
+
+    try {
+      const ws = new WebSocket('ws://localhost:8000/ws/dashboard');
+
+      ws.onopen = () => {
+        console.log('📡 Live GoalFlow Telemetry Channel established!');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.event_type === 'APPROVE') {
+            setManagerApproved((prev) => prev + 1);
+            setPulse(true);
+            setTimeout(() => setPulse(false), 800);
+
+            const newEvent = {
+              id: Date.now(),
+              text: `⚡ [WS LIVE] Manager approved ${data.employee_name}'s goal sheet`,
+              time: 'Just now',
+              type: 'APPROVE',
+            };
+            setActivities((prev) => [newEvent, ...prev]);
+            toast.success(`Approval registered: ${data.employee_name}`, {
+              icon: '🔒',
+            });
+          } else if (data.event_type === 'SUBMIT') {
+            const newEvent = {
+              id: Date.now(),
+              text: `🟢 [WS LIVE] Employee ${data.employee_name} submitted goals`,
+              time: 'Just now',
+              type: 'SUBMIT',
+            };
+            setActivities((prev) => [newEvent, ...prev]);
+            toast.info(`Goal sheet submitted: ${data.employee_name}`, {
+              icon: '📝',
+            });
+          } else if (data.event_type === 'CHECKIN') {
+            const newEvent = {
+              id: Date.now(),
+              text: `📊 [WS LIVE] Employee ${data.employee_name} completed Check-in`,
+              time: 'Just now',
+              type: 'CHECKIN',
+            };
+            setActivities((prev) => [newEvent, ...prev]);
+            toast.success(`Check-in complete: ${data.employee_name}`, {
+              icon: '🏆',
+            });
+          }
+        } catch (e) {
+          console.error('Failed to parse live telemetry packet:', e);
+        }
+      };
+
+      ws.onerror = (e) => {
+        console.warn(
+          'WebSocket channel error. Offline fallback modes are armed.',
+          e
+        );
+      };
+
+      return () => {
+        ws.close();
+      };
+    } catch (e) {
+      console.warn('WebSocket connection refused.', e);
+    }
+  }, []);
+
+  const handleReset = async () => {
+    setIsResetting(true);
+    toast.loading('Restoring pristine demo seed state...', {
+      id: 'reset-toast',
+    });
+
+    try {
+      const res = await fetchApi('/demo/reset', {
+        method: 'POST',
+      });
+      if (res.ok) {
+        toast.success('Demo environment successfully restored!', {
+          id: 'reset-toast',
+          description: 'All employee sheets reset to initial seeds.',
+        });
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        toast.error('Re-seeding failed!', { id: 'reset-toast' });
+      }
+    } catch {
+      toast.error('Connection error!', { id: 'reset-toast' });
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   // Live activity list
   const [activities, setActivities] = useState([
@@ -191,20 +304,35 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#1E293B] border-[#334155] text-white">
+          <Card className="bg-[#1E293B] border-[#334155] text-white relative overflow-hidden">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
                 <span className="text-xs text-[#94A3B8] font-bold uppercase tracking-wider block">
                   Manager Approved
                 </span>
-                <span className="text-3xl font-black text-green-400">
+                <motion.span
+                  key={managerApproved}
+                  initial={{ scale: 0.7, color: '#22C55E' }}
+                  animate={{ scale: 1, color: '#4ADE80' }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                  className="text-3xl font-black block"
+                >
                   {managerApproved}
-                </span>
+                </motion.span>
               </div>
               <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400">
                 <FileCheck className="w-5 h-5" />
               </div>
             </CardContent>
+            {/* Decorative pulse ripple */}
+            {pulse && (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0.5 }}
+                animate={{ scale: 2, opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="absolute inset-0 border-2 border-green-500 rounded-2xl pointer-events-none"
+              />
+            )}
           </Card>
 
           <Card className="bg-[#1E293B] border-[#334155] text-white">
@@ -314,7 +442,22 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Hidden Master Demo Reset button for presentation flexibility */}
+        <button
+          onClick={handleReset}
+          disabled={isResetting}
+          className="text-[#475569] hover:text-[#94A3B8] transition-colors flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest mt-12 mx-auto disabled:opacity-50"
+          title="Restore Pristine seeds"
+        >
+          <span className={`${isResetting ? 'animate-spin' : ''}`}>🔄</span>
+          <span>
+            {isResetting ? 'Resetting Demo State...' : 'Demo Master Reset'}
+          </span>
+        </button>
       </div>
+
+      <Toaster position="top-right" theme="dark" richColors />
     </div>
   );
 }
