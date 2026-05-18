@@ -2,19 +2,7 @@
 
 > From goal creation to appraisal — one platform, zero guesswork.
 
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat-square&logo=postgresql)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis)](https://redis.io/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
-[![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red?style=flat-square)](https://github.com/anujbolewar/GoalFlow)
-
 GoalFlow is a premium enterprise performance agreement portal built to align individual goals with corporate strategic thrust areas, featuring real-time validations, manager approval workflows, telemetric live dashboards, and an interactive AI Coach panel powered by Claude 3.5.
-
-🔗 **[Try the Live Demo →](https://goalflow.vercel.app)** | 🔗 **[Explore GitHub Repository →](https://github.com/anujbolewar/GoalFlow)**
 
 ---
 
@@ -136,6 +124,11 @@ GoalFlow digitizes the entire lifecycle from setting goals to checking achieveme
 
 GoalFlow is structured as an enterprise-grade monorepo containing a Next.js front-end application and a FastAPI backend service communicating over asynchronous pipelines.
 
+![System Architecture Blueprint](./docs/architecture.png)
+
+<details>
+<summary>📐 View Interactive Mermaid Flowchart</summary>
+
 ```mermaid
 graph TD
     User([User Client Browser]) -->|Next.js 14 Web Desk| FE[Next.js Frontend / Vercel]
@@ -149,6 +142,8 @@ graph TD
     BE -->|Push Events| WSBE[Pusher Channels API]
     WSBE -.--->|Broadcasting| User
 ```
+
+</details>
 
 👉 **[View Full Architectural Decisions & Logs →](./docs/ARCHITECTURE.md)**
 
