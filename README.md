@@ -1,14 +1,14 @@
-# 🎯 GoalFlow — Performance Goal Setting & Tracking Portal
+#  GoalFlow — Performance Goal Setting & Tracking Portal
 
 > From goal creation to appraisal — one platform, zero guesswork.
 
-GoalFlow is a premium enterprise performance agreement portal built to align individual goals with corporate strategic thrust areas, featuring real-time validations, manager approval workflows, telemetric live dashboards, and an interactive AI Coach panel powered by Claude 3.5.
+GoalFlow is a enterprise performance agreement portal built to align individual goals with corporate strategic thrust areas, featuring real-time validations, manager approval workflows, telemetric live dashboards, and an interactive AI Coach panel .
 
 ---
 
-## 🖥️ Portal Walkthrough & Interfaces
+##  Portal Walkthrough & Interfaces
 
-### 🔐 1. Access & Sign-In Portal
+###  1. Access & Sign-In Portal
 
 The central login gateway featuring Azure AD Single Sign-On (SSO) options and direct bypass buttons for our key Employee, Manager, and Admin demo roles.
 
@@ -16,7 +16,7 @@ The central login gateway featuring Azure AD Single Sign-On (SSO) options and di
 
 ---
 
-### 📈 2. Employee Performance Desk (Rahul Verma)
+###  2. Employee Performance Desk (Rahul Verma)
 
 The performance tracking board where team members compile quarterly performance indicators, monitor their remaining weightage budgets, and query the active AI suggestions coach.
 
@@ -24,7 +24,7 @@ The performance tracking board where team members compile quarterly performance 
 
 ---
 
-### 🗂️ 3. Manager Goal Approval Desk (Neha Gupta)
+###  3. Manager Goal Approval Desk (Neha Gupta)
 
 The audit workspace where managers review team sheets, verify metrics against corporate Thrust Areas, and trigger a secure lock on compliant sheets with mechanical lock sounds.
 
@@ -32,7 +32,7 @@ The audit workspace where managers review team sheets, verify metrics against co
 
 ---
 
-### 📊 4. Admin Completion Dashboard
+###  4. Admin Completion Dashboard
 
 The executive oversight center charting departmental performance alignment metrics, overall completion averages, and streaming telemetric updates directly via WebSockets.
 
@@ -40,7 +40,7 @@ The executive oversight center charting departmental performance alignment metri
 
 ---
 
-## ⚡ The Problem
+##  The Problem
 
 Most organizations manage performance agreements using fragmented tools. Teams pass spreadsheets back and forth over email, managers manually tally weights on scrap paper, and HR coordinates cycles using calendar reminders and static forms.
 
@@ -50,7 +50,7 @@ When quarterly appraisal time arrives, this process leads to immense pain. Disco
 
 ---
 
-## 🎯 The Solution
+##  The Solution
 
 GoalFlow digitizes the entire lifecycle from setting goals to checking achievements inside a unified workspace:
 
@@ -91,13 +91,6 @@ GoalFlow digitizes the entire lifecycle from setting goals to checking achieveme
 | **Timeline**    | Schedule Tracking          | $\text{Completion Date} \le \text{Deadline} \implies 100\%$, else $0\%$ |
 | **Zero-Based**  | Binary Incidents           | $\text{Actual} = 0 \implies 100\%$, else $0\%$                          |
 
-### Bonus Features
-
-- 🚀 **Azure AD SSO Integration**: Enterprise-grade Azure identity authentication using MSAL.js.
-- 🚀 **Microsoft Teams Alerts**: Push automatic notifications to manager channels whenever a team member submits goals.
-- 🚀 **Pusher Telemetry Channels**: Broadcasts real-time events to HR dashboards immediately when manager approvals occur.
-- 🚀 **AI Coach Recommendation Panel**: Live target metric suggestion generation fueled by Anthropic Claude 3.5 API.
-
 ---
 
 ## 🛠️ Tech Stack
@@ -120,14 +113,14 @@ GoalFlow digitizes the entire lifecycle from setting goals to checking achieveme
 
 ---
 
-## 📐 Architecture & Telemetry Flow
+## Architecture & Telemetry Flow
 
 GoalFlow is structured as an enterprise-grade monorepo containing a Next.js front-end application and a FastAPI backend service communicating over asynchronous pipelines.
 
 ![System Architecture Blueprint](./docs/architecture.png)
 
 <details>
-<summary>📐 View Interactive Mermaid Flowchart</summary>
+<summary> View Interactive Mermaid Flowchart</summary>
 
 ```mermaid
 graph TD
@@ -144,12 +137,9 @@ graph TD
 ```
 
 </details>
-
-👉 **[View Full Architectural Decisions & Logs →](./docs/ARCHITECTURE.md)**
-
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -242,103 +232,18 @@ cd apps/api && celery -A core.celery worker --loglevel=info
 
 # Terminal 4: Celery Beat Scheduler
 cd apps/api && celery -A core.celery beat --loglevel=info
-```
-
 ---
 
-### Docker Compose Quick Start (Recommended)
-
-You can start the entire stack, databases, and message queues in one command:
-
-```bash
-docker compose up --build
 ```
-
-Below is the complete `docker-compose.yml` config orchestrating these services:
-
-```yaml
-version: '3.8'
-
-services:
-  db:
-    image: postgres:15-alpine
-    container_name: goalflow-postgres
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: goalflow
-    ports:
-      - '5432:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-    container_name: goalflow-redis
-    restart: always
-    ports:
-      - '6379:6379'
-
-  api:
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile
-    container_name: goalflow-api
-    restart: always
-    ports:
-      - '8000:8000'
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/goalflow
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - db
-      - redis
-
-  web:
-    build:
-      context: ./apps/web
-      dockerfile: Dockerfile
-    container_name: goalflow-web
-    restart: always
-    ports:
-      - '3000:3000'
-    environment:
-      - NEXT_PUBLIC_API_URL=http://api:8000
-    depends_on:
-      - api
-
-  celery_worker:
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile
-    command: celery -A core.celery worker --loglevel=info
-    container_name: goalflow-celery-worker
-    restart: always
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/goalflow
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - redis
-      - db
-
-volumes:
-  postgres_data:
-```
-
----
-
-## 🚀 Live Demo Credentials
+##  Live Demo Credentials
 
 Use these credentials to test the various dashboards inside the portal:
 
-| Persona        | Email address            | Password   | Direct Dashboard Link                                            |
-| :------------- | :----------------------- | :--------- | :--------------------------------------------------------------- |
-| **Employee**   | `employee@goalflow.demo` | `Demo@123` | [http://localhost:3000/employee](http://localhost:3000/employee) |
-| **Manager**    | `manager@goalflow.demo`  | `Demo@123` | [http://localhost:3000/manager](http://localhost:3000/manager)   |
-| **Admin / HR** | `admin@goalflow.demo`    | `Demo@123` | [http://localhost:3000/admin](http://localhost:3000/admin)       |
-
-🔗 **[Try the Live Demo Portal →](https://goalflow.vercel.app)**
+| Persona        | Email address            | Password   | 
+| :------------- | :----------------------- | :--------- | 
+| **Employee**   | `employee@goalflow.demo` | `Demo@123` | 
+| **Manager**    | `manager@goalflow.demo`  | `Demo@123` | 
+| **Admin / HR** | `admin@goalflow.demo`    | `Demo@123` | 
 
 ---
 
@@ -356,9 +261,6 @@ _Alternatively, you can trigger this in a single click using the **Demo Master R
 
 ## 📋 API Route Quick Reference
 
-- 🔗 **[FastAPI Live Interactive OpenAPI docs (Swagger) →](https://api.goalflow.railway.app/docs)**
-- 🔗 **[FastAPI ReDoc Reference →](https://api.goalflow.railway.app/redoc)**
-
 | Method   | Endpoint                      | Purpose                                              | Access Role |
 | :------- | :---------------------------- | :--------------------------------------------------- | :---------- |
 | **POST** | `/auth/login`                 | Authenticates user credentials and signs a JWT token | Public      |
@@ -368,66 +270,6 @@ _Alternatively, you can trigger this in a single click using the **Demo Master R
 | **GET**  | `/admin/dashboard`            | Compiles aggregate stats and organizational metrics  | Admin       |
 | **POST** | `/ai/suggest-goals`           | Triggers Claude AI metric recommendation prompts     | Employee    |
 | **WS**   | `/ws/dashboard`               | Real-time WebSocket connection for activity events   | Admin       |
-
----
-
-## 📂 Project Structure
-
-```
-goalflow/
-├── apps/
-│   ├── web/                    # Next.js 14 App Router
-│   │   ├── app/               # Main layout routes
-│   │   ├── components/        # Radix & Custom components
-│   │   ├── features/          # Modular feature sections
-│   │   │   ├── goals/         # Performance agreements
-│   │   │   ├── manager/       # Approvals & inline adjustments
-│   │   │   ├── admin/         # HR visual stats
-│   │   │   ├── auth/          # Azure SSO & local forms
-│   │   │   └── ai/            # Claude suggestions shimmers
-│   │   ├── lib/               # Telemetry tools & fallbacks
-│   │   └── types/             # Common TS configurations
-│   │
-│   └── api/                   # FastAPI Server Layer
-│       ├── routers/           # Endpoint handlers
-│       ├── services/          # Business logic engines
-│       ├── models/            # SQLAlchemy database tables
-│       ├── schemas/           # Pydantic data schema models
-│       ├── core/              # Config, security, Celery Beat
-│       ├── dependencies/      # Role permissions & authed tokens
-│       └── migrations/        # Alembic schema modifications
-│
-├── packages/
-│   └── shared/                # Common schemas (TS + Python)
-│
-├── docs/
-│   ├── architecture.png       # Static overview diagram
-│   ├── ARCHITECTURE.md        # Core technical specifications
-│   └── ADR/                   # Architecture Decision Records
-│
-├── docker-compose.yml         # Container services configurations
-├── README.md                  # Main walk-through manual
-└── turbo.json                 # Turborepo configurations
-```
-
----
-
-## 📈 Platform Cost Analysis
-
-GoalFlow was architected from day one to operate with near-zero overhead, utilizing standard sandbox limits:
-
-| Infrastructure Layer      | Service Plan                | Monthly Cost     |
-| :------------------------ | :-------------------------- | :--------------- |
-| **Frontend Delivery**     | Vercel Hobby Plan           | $0.00            |
-| **API & Database Server** | Railway Starter Plan        | $5.00            |
-| **Real-time Pipeline**    | Pusher Channels Sandbox     | $0.00            |
-| **AI Suggestions**        | Anthropic API (Pay-Per-Use) | ~$2.00           |
-| **CI/CD Integrations**    | GitHub Actions (Free Tier)  | $0.00            |
-| **TOTAL RUN COST**        |                             | **~$7.00/month** |
-
-> [!NOTE]
-> Designed to support a growing organization of **100 active employees for under $10 per month**.
-
 ---
 
 ## 🤝 Contributing
@@ -440,20 +282,3 @@ We welcome structural improvements from the community!
    - **Backend**: `flake8` and `black` formatter scripts.
 3. Commit using Conventional Commits: `git commit -m "feat(web): add mechanical audio mute selector"`.
 4. Open a **Pull Request** explaining your implementation details.
-
----
-
-## 👥 Core Project Team
-
-- **Anuj** — _Agentic Orchestration_ — [@anujbolewar](https://github.com/anujbolewar)
-- **Divesh** — _Systems Design_
-- **Om** — _ML Sizing_
-- **Atul** — _Fullstack Integration_
-- **Tiya** — _GenAI & Communications_
-
----
-
-P.S. We read the requirements. Then we read them again. Every validation rule you defined is fully enforced, and every interface is pitch-ready!
-
-Built with ❤️ for GoalFlow.
-<!-- trigger github refresh -->
